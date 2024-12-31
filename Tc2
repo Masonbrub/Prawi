@@ -240,4 +240,94 @@ Options.Themes:OnChanged(function()
         UpdateTheme(Color3.fromRGB(27, 20, 52), Color3.fromRGB(31, 26, 67), Color3.fromRGB(218, 5, 88), Color3.fromRGB(55, 48, 87), Color3.fromRGB(255, 255, 255))
     elseif Options.Themes.Value == "Skeet" then
         UpdateTheme(Color3.fromRGB(16, 16, 16), Color3.fromRGB(16, 16, 16), Color3.fromRGB(113, 143, 18), Color3.fromRGB(36, 36, 36), Color3.fromRGB(200, 200, 200))
-    elseif Options.Themes.Value == "
+    elseif Options.Themes.Value == "Twitch" then
+        UpdateTheme(Color3.fromRGB(16, 16, 16), Color3.fromRGB(28, 31, 32), Color3.fromRGB(129, 85, 188), Color3.fromRGB(41, 41, 41), Color3.fromRGB(200, 200, 200))
+    elseif Options.Themes.Value == "BLM" then
+        UpdateTheme(Color3.fromRGB(0, 0, 0), Color3.fromRGB(0, 0, 0), Color3.fromRGB(0, 0, 0), Color3.fromRGB(0, 0, 0), Color3.fromRGB(255, 255, 255))
+    end
+end)
+Options.AccentColor:OnChanged(function()
+    UpdateTheme(nil, nil, Options.AccentColor.Value)
+end);
+
+Library.ToggleKeybind = Options.MenuKeybind; ThemeManager:SetLibrary(Library); SaveManager:SetLibrary(Library); SaveManager:IgnoreThemeSettings(); SaveManager:SetIgnoreIndexes({ 'MenuKeybind' }); ThemeManager:SetFolder('RedLeaf/tc2'); SaveManager:SetFolder('RedLeaf/tc2')
+if game:GetService('Players').LocalPlayer and game:GetService('Players').LocalPlayer.DisplayName then
+    Library:Notify('Welcome to Red.Leaf, ' .. game:GetService('Players').LocalPlayer.DisplayName .. '!', 7)
+else
+    Library:Notify("Red.Leaf has been initialized in " .. tostring(string.format('%.2f', tick() - TimeToLoad)) .. 's', 7)
+end
+
+game:GetService("RunService").RenderStepped:Connect(function() if Library.Unloaded then return end if Toggles.customfov.Value then game:GetService('Workspace').CurrentCamera.FieldOfView = Options.customfovamount.Value end; if Toggles.NoWatermark.Value then Library:SetWatermarkVisibility(Toggles.NoWatermark.Value) else Library:SetWatermarkVisibility(false) end; if Toggles.DisableMovement.Value and Library.Toggled then game:GetService('ContextActionService'):BindAction('FreezeMovement', function() return Enum.ContextActionResult.Sink end, false, unpack(Enum.PlayerActions:GetEnumItems())); else game:GetService('ContextActionService'):UnbindAction('FreezeMovement'); end end)
+
+spawn(function()
+    game:GetService("RunService").RenderStepped:Connect(function(frametime)
+        local stringorder = "Red.Leaf"
+        if Options.WatermarkSettings.Value["Display Name"] == true then
+            stringorder = stringorder .. " | " .. 'User: ' .. tostring(game:GetService('Players').LocalPlayer.DisplayName)
+        end
+        if Options.WatermarkSettings.Value["Config Name"] == true then
+            if stringorder ~= "Red.Leaf" then
+                stringorder = stringorder
+            end
+            stringorder = stringorder .. " | " .. tostring(ConfigName)
+        end
+        if Options.WatermarkSettings.Value["Time"] == true then
+            if stringorder ~= "Red.Leaf" then
+                stringorder = stringorder
+            end
+            stringorder = stringorder .. " | " .. os.date('%I:%M:%S %p')
+        end
+        if Options.WatermarkSettings.Value["Date"] == true then
+            if stringorder ~= "Red.Leaf" then
+                stringorder = stringorder
+            end
+            stringorder = stringorder .. " | " .. os.date("%B %d") .. (os.date("%d"):sub(-1) == "1" and (os.date("%d") ~= "11" and "st" or "") or os.date("%d"):sub(-1) == "2" and (os.date("%d") ~= "12" and "nd" or "") or os.date("%d"):sub(-1) == "3" and (os.date("%d") ~= "13" and "rd" or "") or "th") .. ", " .. os.date("%Y")
+        end
+        if Options.WatermarkSettings.Value["Framerate"] == true then
+            if stringorder ~= "Red.Leaf" then
+                stringorder = stringorder
+            end
+255, Library.AccentColor.B * 255, math.floor(1/frametime) .. ' fps'))
+        end
+        if Options.WatermarkColorSettings.Value["Latency"] then
+            stringorder = string.gsub(stringorder, math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) .. ' ms', string.format('<font color="rgb(%d, %d, %d)">%s</font>', Library.AccentColor.R * 255, Library.AccentColor.G * 255, Library.AccentColor.B * 255, math.floor(game:GetService("Stats").Network.ServerStatsItem["Data Ping"]:GetValue()) .. ' ms'))
+        end
+        Library:SetWatermark(stringorder)
+    end)
+end)
+
+game:GetService("RunService").RenderStepped:Connect(function() if Toggles.customfov.Value then game:GetService('Workspace').CurrentCamera.FieldOfView = Options.customfovamount.Value end; if Toggles.NoWatermark.Value then Library:SetWatermarkVisibility(Toggles.NoWatermark.Value) else Library:SetWatermarkVisibility(false) end end)
+
+task.spawn(function()
+    while task.wait() do
+        Toggles.thirdperson:SetValue(Options.thirdpersonbind:GetState())
+        Toggles.walkspeedmod:SetValue(Options.walkspeedmodbind:GetState())
+        if Library.Unloaded then break end
+    end
+end)
+
+
+
+
+
+
+local function setwatermarkposition(X, Y)
+    local ScreenSize = game:GetService('Workspace').CurrentCamera.ViewportSize
+    local X = math.clamp((X / 100) * (ScreenSize.X - Library.Watermark.Size.X.Offset), 0, ScreenSize.X - Library.Watermark.Size.X.Offset)
+    local Y = math.clamp((Y / 100) * (ScreenSize.Y - Library.Watermark.Size.Y.Offset), 0, ScreenSize.Y - Library.Watermark.Size.Y.Offset)
+    Library.Watermark.Position = UDim2.new(0, X, 0, Y)
+end
+
+local function instantrespawn()
+    if game:GetService('Players').LocalPlayer.PlayerGui.GUI.Client.LegacyLocalVariables.died.Value and LocalPlayer.Team == 'GRN' or game:GetService('Players').LocalPlayer.PlayerGui.GUI.Client.LegacyLocalVariables.died.Value and LocalPlayer.Team == 'RED' then
+        game:GetService("ReplicatedStorage").Events.LoadCharacter:FireServer()
+    end
+end
+
+local function healbotsaveself()
+    if LocalPlayer:FindFirstChild('Status'):FindFirstChild('Class').Value == 'Doctor' and LocalPlayer.Character.Humanoid.Health < Options.healthamount.Value then
+        game:GetService('Players').LocalPlayer.Character.Doctor.ChangeValue:FireServer('Target', tostring(LocalPlayer.Name))
+    elseif LocalPlayer:FindFirstChild('Status'):FindFirstChild('Class').Value == 'Doctor' and LocalPlayer.Character.Humanoid.Health >= Options.healthamount.Value and game:GetService('Players').LocalPlayer.Character.Doctor:GetAttribute('Target') == tostring(LocalPlayer.Name) then
+        game:GetService('Players').LocalPlayer.Character.Doctor.ChangeValue:FireServer('Target', '')
+    end
+end
